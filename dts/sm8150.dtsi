@@ -138,8 +138,11 @@
               <0 0x1d87000 0 0x1000>;       /* UFS PHY */
         interrupts = <0 265 0>;
         native-ufs-interrupt = <265>;
-        // SM8150 UFS 直连内存（DTS 无 iommus 绑定，不走 SMMU），因此不提供
-        // native-ufs-smmu-reg / native-ufs-stream-id（SM7325 走 SMMU 才有）。
+        // SM8150 UFS 走 SMMU（apps_smmu 0x15000000，stream ID 0x300）。
+        // NativeUfs 的 kSm8150Ufs 硬编码了这些值；这里列出来作为文档记录
+        // （若未来改成从 ADT 读取，这些属性即可直接使用）。
+        native-ufs-smmu-reg = <0 0x15000000 0 0x100000>;
+        native-ufs-stream-id = <0x300>;
         unixnu,adt-name = "ufshc";
         lanes-per-direction = <2>;
         dev-ref-clk-freq = <19>;
