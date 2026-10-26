@@ -1,0 +1,164 @@
+schema_version = 1
+
+# SM8150 SoC 组件定义（参考 sm7325-common 的社区组件，为 SM8150 适配）。
+# 说明：这些驱动组件当前引用 RigoLigoRLC 的 SM7325 仓库作为参考起点，
+# SM8150 的 fork 仓库建立后，需把 repository/revision 指向 fork 并改硬件基址。
+# 关键差异标注在 hardware / board_dependencies 字段。
+
+[[component]]
+id = "ArmCpu"
+kind = "driver"
+function = "SM8150 GICv3, architectural timer and eight-core CPU startup"
+scope = "soc"
+repository = "https://github.com/RigoLigoRLC/unixnu-armcpu.git"
+revision = "36e1e6f62fbbfd634b596c9cb8843a8ebe355782"
+path = "drivers/ArmCpu"
+hardware = ["SM8150", "ARM GICv3", "ARM generic timer"]
+os_abi = ["ipados-17.7.11-21H461"]
+board_dependencies = ["CPU affinities and cluster properties in DTS", "UEFI PSCI services"]
+verified_devices = []
+dependencies = []
+source_files = ["ArmCpu.cpp"]
+runtime_identifiers = ["org.blu-sharky.ArmCpu", "ArmCpu"]
+build_stage = "kernel"
+build = ["build-arm-driver.py", "ArmCpu"]
+outputs = ["build/armcpu/libArmCpu.a"]
+
+[[component]]
+id = "NativeUfs"
+kind = "driver"
+function = "SM8150 UFS queues and device storage windows"
+scope = "soc"
+repository = "https://github.com/RigoLigoRLC/unixnu-nativeufs.git"
+revision = "063cf4c73c67eb5e9df95aa4be9461ce85a0f28f"
+path = "drivers/NativeUfs"
+# 关键差异（SM8150 vs SM7325）：
+#   - UFSHC 基址一致 0x1d84000，PHY 一致 0x1d87000，ICE 0x1d90000
+#   - 中断 INTID 265（SM7325 是 297）
+#   - SM8150 UFS 直连内存（DTS 无 iommus 绑定），不走 SMMU；SM7325 走 SMMU stream 0x80
+hardware = ["SM8150 UFS controller 0x1d84000", "Qualcomm ICE 0x1d90000"]
+os_abi = ["ipados-17.7.11-21H461", "IOStorageFamily"]
+board_dependencies = ["native-ufs-interrupt (INTID 265)", "userdata windows", "Apple storage bindings"]
+verified_devices = []
+dependencies = []
+source_files = ["NativeUfs.cpp"]
+runtime_identifiers = ["NativeUfs", "org.blu-sharky.NativeUfs"]
+build_stage = "embedded"
+build = []
+outputs = ["build/native-ufs/libNativeUfs.a", "build/native-ufs/bindings.json"]
+
+[[component]]
+id = "NativeQcomSpmi"
+kind = "driver"
+function = "Qualcomm PMIC arbiter v5 SPMI operations and PDC interrupt routing"
+scope = "controller"
+repository = "https://github.com/RigoLigoRLC/unixnu-nativeqcomspmi.git"
+revision = "ce3ccf0d2369048ec01372183c8e34dcc519c35f"
+path = "drivers/NativeQcomSpmi"
+hardware = ["SM8150 PMIC arbiter v5", "PDC"]
+os_abi = []
+board_dependencies = ["PMIC resource mapping and interrupt ownership"]
+verified_devices = []
+dependencies = []
+source_files = ["NativeQcomSpmi.cpp", "NativeQcomSpmi.h"]
+runtime_identifiers = ["NativeQcomSpmi"]
+build_stage = "embedded"
+build = []
+outputs = ["build/d2xq-pmic-keys/libD2XQPmicKeys.a"]
+
+[[component]]
+id = "NativeQcomTsens"
+kind = "driver"
+function = "Qualcomm TSENS v2 temperature conversion and validity sampling"
+scope = "controller"
+repository = "https://github.com/RigoLigoRLC/unixnu-nativeqcomtsens.git"
+revision = "8b2fb5e610eaed8fb7c0dc368da9e379adc0e12f"
+path = "drivers/NativeQcomTsens"
+hardware = ["SM8150 TSENS v2"]
+os_abi = []
+board_dependencies = ["Sensor register callbacks and CPU thermal policy"]
+verified_devices = []
+dependencies = []
+source_files = ["NativeQcomTsens.cpp", "NativeQcomTsens.h"]
+runtime_identifiers = ["NativeQcomTsens"]
+build_stage = "embedded"
+build = []
+outputs = ["build/d2xq-cpu-power/libD2XQCpuPower.a"]
+
+[[component]]
+id = "NativeGeniSpi"
+kind = "driver"
+function = "Qualcomm GENI SPI FIFO operations and transfer recovery"
+scope = "controller"
+repository = "https://github.com/RigoLigoRLC/unixnu-nativegenispi.git"
+revision = "d57a1715273080095e8ba77b2ea515849823c8a8"
+path = "drivers/NativeGeniSpi"
+hardware = ["Qualcomm GENI SPI"]
+os_abi = []
+board_dependencies = ["MMIO, clock and GPIO callbacks"]
+verified_devices = []
+dependencies = []
+source_files = ["GeniSpi.c", "GeniSpi.h"]
+runtime_identifiers = ["NativeGeniSpi"]
+build_stage = "embedded"
+build = []
+outputs = ["build/d2xq-touch-input/libD2XQTouch.a"]
+
+[[component]]
+id = "NativeGeniI2c"
+kind = "driver"
+function = "Qualcomm GENI I2C FIFO and open-drain transfers"
+scope = "controller"
+repository = "https://github.com/RigoLigoRLC/unixnu-nativegenii2c.git"
+revision = "c9185a7a469cd0297608633e30ab875e9a7c5e03"
+path = "drivers/NativeGeniI2c"
+hardware = ["Qualcomm GENI I2C"]
+os_abi = []
+board_dependencies = ["MMIO, clock and GPIO callbacks"]
+verified_devices = []
+dependencies = []
+source_files = ["NativeGeniI2c.cpp", "NativeGeniI2c.h"]
+runtime_identifiers = ["NativeGeniI2c"]
+build_stage = "embedded"
+build = []
+outputs = ["build/d2xq-display-power/libD2XQDisplayPower.a"]
+
+[[component]]
+id = "NativeQcomDsi"
+kind = "driver"
+function = "Qualcomm DSI command FIFO and video-mode command scheduling"
+scope = "controller"
+repository = "https://github.com/RigoLigoRLC/unixnu-nativeqcomdsi.git"
+revision = "d486690195683e169343ee316af0f45842a2107a"
+path = "drivers/NativeQcomDsi"
+hardware = ["SM8150 DSI0 controller 0xae94000"]
+os_abi = []
+board_dependencies = ["Inherited video timing and board panel power policy"]
+verified_devices = []
+dependencies = []
+source_files = ["QcomDsi.c", "QcomDsi.h"]
+runtime_identifiers = ["NativeQcomDsi"]
+build_stage = "embedded"
+build = []
+outputs = ["build/d2xq-display-power/libD2XQDisplayPower.a"]
+
+[[component]]
+id = "Adreno6xx"
+kind = "driver"
+function = "Adreno 640 GMU power, SMMU memory and command processor submission"
+scope = "gpu"
+repository = "https://github.com/RigoLigoRLC/unixnu-adreno6xx.git"
+revision = "ecb2b586acfc515699207c0c8cf1832509894a94"
+path = "drivers/Adreno6xx"
+# 关键差异：SM8150 = Adreno 640（chip id 0x06050000），SM7325 = A642L（0x06030500）。
+# GMU/SQE/ZAP 固件不同，需从 SM8150 vendor 分区提取。
+hardware = ["Adreno 640", "SM8150"]
+os_abi = ["ipados-17.7.11-21H461"]
+board_dependencies = ["A6xx GMU, SQE and ZAP firmware", "GPU power resources", "GPU and GMU stream ownership"]
+verified_devices = []
+dependencies = ["ArmSmmu4K", "AdrenoPM4", "AdrenoFirmware"]
+source_files = ["NativeAdrenoService.cpp", "NativeAdrenoA6xxGmu.cpp", "NativeAdrenoA6xxPower.cpp"]
+runtime_identifiers = ["NativeAdrenoGpuPublished", "AGXDeviceUserClient"]
+build_stage = "embedded"
+build = []
+outputs = ["build/adreno6xx/libAdreno6xx.a"]

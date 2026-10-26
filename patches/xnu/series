@@ -1,10 +1,20 @@
 # SM8150 XNU patch series（每行一个，按应用顺序）
 #
-# SM8150(骁龙855) 与 SM8550 都是 8 核 3 簇(1+3+4) Qualcomm ARM64，MPIDR 布局一致，
-# 平台 patch 移植自 sm8550-common。
+# SM8150(骁龙855) 与 SM8550/SM7325 同为 8 核 3 簇(1+3+4) Qualcomm ARM64，
+# MPIDR 布局一致。平台 patch 移植自 sm8550-common / sm7325-common 参考。
+
+# SMP：MAX_CPUS 4→8 + MPIDR 在 Affinity1 编号核心（移植自 sm8550-common）
 native-smp-secondary.patch
-#
-# 定时器：arch 层 architectural-timer-entry.patch 已覆盖（config_fragments 里
-#   NATIVE_ARCH_TIMER=y 时启用架构定时器，跳过 BCM2837 的定时器中断路由）。
-# 时钟：无专门 patch，由 ArmDTPlatform 组件从 DT 读时钟频率（通用机制）。
-# 其余平台支持（GICv3/SPI/串口等）由 arch patch + ArmCpu/ArmDTPlatform 组件提供。
+
+# 时钟：DT 平台从 cntfrq_el0 读 timebase 频率（而非 BCM2837 的 MMIO 默认值），
+# 并给 bus/dec 频率计算加除零保护。移植自 sm7325-common。
+native-armdt-clock.patch
+
+# 定时器：NATIVE_ARCH_TIMER 时保留物理定时器（ArchTimer 用虚拟定时器 PPI，
+# 不再需要禁用 CNTP）。arch 层 architectural-timer-entry.patch 只处理 start.s 的
+# 中断路由，不覆盖 machine_routines.c 里的 CNTP_CTL 处理。移植自 sm7325-common。
+native-virtual-timer-access.patch
+
+# TODO(P2): native-smp-cpu-started.patch（把 cpu_machine_init 的 static started 改非
+#   static）已复制进来但暂不启用——去掉 static 后 started 未初始化，需先核对
+#   XNU osfmk/arm/cpu_common.c 的完整上下文确认这个 patch 是否依赖 sm7325 的其他改动。
