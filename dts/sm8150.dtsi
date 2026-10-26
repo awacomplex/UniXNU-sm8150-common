@@ -1,0 +1,185 @@
+// SPDX-License-Identifier: BSD-2-Clause-Patent
+// SM8150 shared hardware description.
+// 来源：android_kernel_samsung_d2xq @ N9760ZCS3DTJ1
+//   - arch/arm64/boot/dts/qcom/sm8150.dtsi
+//   - arch/arm64/boot/dts/qcom/sm8150-pinctrl.dtsi
+// 只收录已在源码中核对过的值；板级内存/保留区/显示/触摸留在设备仓。
+
+/ {
+    #address-cells = <2>;
+    #size-cells = <2>;
+
+    psci {
+        compatible = "arm,psci-1.0";
+        method = "smc";
+    };
+
+    timer {
+        compatible = "arm,armv8-timer";
+        interrupts = <1 1 0xf08>,
+                     <1 2 0xf08>,
+                     <1 3 0xf08>,
+                     <1 0 0xf08>;
+        clock-frequency = <19200000>;
+    };
+
+    cpus {
+        #address-cells = <2>;
+        #size-cells = <0>;
+        timebase-frequency = <19200000>;
+
+        CPU0: cpu@0 {
+            device_type = "cpu";
+            compatible = "arm,armv8";
+            reg = <0x0 0x0>;
+            enable-method = "psci";
+            capacity-dmips-mhz = <1024>;
+        };
+        CPU1: cpu@100 {
+            device_type = "cpu";
+            compatible = "arm,armv8";
+            reg = <0x0 0x100>;
+            enable-method = "psci";
+        };
+        CPU2: cpu@200 {
+            device_type = "cpu";
+            compatible = "arm,armv8";
+            reg = <0x0 0x200>;
+            enable-method = "psci";
+        };
+        CPU3: cpu@300 {
+            device_type = "cpu";
+            compatible = "arm,armv8";
+            reg = <0x0 0x300>;
+            enable-method = "psci";
+        };
+        CPU4: cpu@400 {
+            device_type = "cpu";
+            compatible = "arm,armv8";
+            reg = <0x0 0x400>;
+            enable-method = "psci";
+        };
+        CPU5: cpu@500 {
+            device_type = "cpu";
+            compatible = "arm,armv8";
+            reg = <0x0 0x500>;
+            enable-method = "psci";
+        };
+        CPU6: cpu@600 {
+            device_type = "cpu";
+            compatible = "arm,armv8";
+            reg = <0x0 0x600>;
+            enable-method = "psci";
+        };
+        CPU7: cpu@700 {
+            device_type = "cpu";
+            compatible = "arm,armv8";
+            reg = <0x0 0x700>;
+            enable-method = "psci";
+        };
+    };
+
+    intc: interrupt-controller@17a00000 {
+        compatible = "arm,gic-v3";
+        #interrupt-cells = <3>;
+        interrupt-controller;
+        #redistributor-regions = <1>;
+        redistributor-stride = <0x0 0x20000>;
+        reg = <0x17a00000 0x10000>,     /* GICD */
+              <0x17a60000 0x100000>;    /* GICR */
+    };
+
+    tlmm: pinctrl@03000000 {
+        compatible = "qcom,sm8150-pinctrl";
+        reg = <0x03000000 0xdc2000>,
+              <0x17c000f0 0x60>;
+        reg-names = "pinctrl", "spi_cfg";
+        interrupts = <0 208 0>;
+        gpio-controller;
+        #gpio-cells = <2>;
+        interrupt-controller;
+        #interrupt-cells = <2>;
+    };
+
+    ufshc_mem: ufshc@1d84000 {
+        compatible = "qcom,ufshc";
+        reg = <0x1d84000 0x2500>,
+              <0x1d87000 0xe00>;
+        interrupts = <0 265 0>;
+        lanes-per-direction = <2>;
+        dev-ref-clk-freq = <19>;
+        status = "disabled";
+    };
+
+    // ---- GENI SE（Serial Engine 包装器），基址取自 sm8150-qupv3.dtsi ----
+    qupv3_0: geni_se@8c0000 {
+        compatible = "qcom,geni-se-qup";
+        reg = <0x8c0000 0x6000>;
+        #address-cells = <1>;
+        #size-cells = <1>;
+        status = "disabled";
+    };
+
+    qupv3_1: geni_se@ac0000 {
+        compatible = "qcom,geni-se-qup";
+        reg = <0xac0000 0x6000>;
+        #address-cells = <1>;
+        #size-cells = <1>;
+        status = "disabled";
+    };
+
+    qupv3_2: geni_se@cc0000 {
+        compatible = "qcom,geni-se-qup";
+        reg = <0xcc0000 0x6000>;
+        #address-cells = <1>;
+        #size-cells = <1>;
+        status = "disabled";
+
+        // 触摸 sec_ts 实测挂在这里（DT: /soc/i2c@0xc80000/touchscreen@48）
+        i2c_touch: i2c@c80000 {
+            compatible = "qcom,i2c-geni";
+            reg = <0xc80000 0x4000>;
+            #address-cells = <1>;
+            #size-cells = <0>;
+            status = "disabled";
+        };
+    };
+
+    // 触摸 sec_ts@0x48 挂在哪个 SE 待确认（overlay fragment@99 的 target phandle）
+    // 典型候选：qupv3_1 的 i2c（0xac0000 + n*0x4000）
+
+    // ---- SPMI（PM8150 系列挂在这里）----
+    spmi_bus: spmi@c440000 {
+        compatible = "qcom,spmi-pmic-arb";
+        reg = <0xc440000 0x1100>,
+              <0xc600000 0x2000000>,
+              <0xc400000 0x210000>;
+        reg-names = "core", "chnls", "obsrvr";
+        #address-cells = <2>;
+        #size-cells = <0>;
+        status = "disabled";
+    };
+
+    // ---- 显示：MDP + DSI 控制器/PHY ----
+    mdss_mdp: mdss_mdp@ae00000 {
+        compatible = "qcom,sde-kms";
+        reg = <0xae00000 0x84208>;
+        status = "disabled";
+    };
+
+    mdss_dsi0: dsi_ctrl@ae94000 {
+        compatible = "qcom,dsi-ctrl-hw-v2.3";
+        reg = <0xae94000 0x400>,
+              <0xaf08000 0x4>;
+        reg-names = "dsi_ctrl", "disp_cc_base";
+        status = "disabled";
+    };
+
+    mdss_dsi_phy0: dsi_phy@ae94400 {
+        compatible = "qcom,dsi-phy-v4.0";
+        reg = <0xae94400 0x400>;
+        status = "disabled";
+    };
+
+    // TODO(P1)：USB（0xa600000，dwc3）、IPA、PCIe
+};

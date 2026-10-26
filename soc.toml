@@ -1,0 +1,21 @@
+schema_version = 2
+
+[soc]
+name = "SM8150"
+description = "Qualcomm SM8150 (Snapdragon 855), ARM64 with three CPU clusters"
+# TODO(P0): 换成 d2xq 内核仓库的固定提交（当前为参考仓库）
+hardware_repository = "https://github.com/huangkaikaihuang/android_kernel_samsung_d2xq.git"
+hardware_revision = "N9760ZCS3DTJ1"
+hardware_paths = [
+  "arch/arm64/boot/dts/vendor/qcom/sm8150.dtsi",
+  "arch/arm64/boot/dts/vendor/qcom/sm8150-thermal.dtsi",
+  "drivers/clk/qcom/gcc-sm8150.c",
+  "drivers/pinctrl/qcom/pinctrl-sm8150.c",
+]
+
+[components]
+include = ["ArmDTPlatform", "ArmCpu", "NativeUfs"]
+
+[kernel]
+config_fragments = ["arch:configs/common.config", "soc:configs/sm8150.config"]
+patch_series = ["arch:patches/xnu/series", "soc:patches/xnu/series"]

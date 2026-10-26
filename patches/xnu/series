@@ -1,0 +1,6 @@
+# SM8150 XNU patch series
+# TODO(P1): 从 sm7325-common 的 series 起步，逐条核对是否适用于 SM8150：
+#   native-armdt-clock.patch
+#   native-smp-cpu-started.patch
+#   native-virtual-timer-access.patch
+#   （native-t733-* 是 T733 专属，不要直接沿用）
