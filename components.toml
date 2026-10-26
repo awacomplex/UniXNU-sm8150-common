@@ -29,8 +29,8 @@ id = "NativeUfs"
 kind = "driver"
 function = "SM8150 UFS queues and device storage windows"
 scope = "soc"
-repository = "https://github.com/RigoLigoRLC/unixnu-nativeufs.git"
-revision = "063cf4c73c67eb5e9df95aa4be9461ce85a0f28f"
+repository = "https://github.com/awacomplex/unixnu-nativeufs.git"
+revision = "5919ff7c7eb9864bcb60f0a0b448fa0083d03cf6"
 path = "drivers/NativeUfs"
 # 关键差异（SM8150 vs SM7325）：
 #   - UFSHC 基址一致 0x1d84000，PHY 一致 0x1d87000，ICE 0x1d90000
